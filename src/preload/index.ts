@@ -23,7 +23,9 @@ const api = {
       ipcRenderer.invoke('tasks:complete', id, completed),
     subtasks: (parentId: number): Promise<Task[]> =>
       ipcRenderer.invoke('tasks:subtasks', parentId),
-    split: (input: SplitTaskInput): Promise<Task[]> => ipcRenderer.invoke('tasks:split', input)
+    split: (input: SplitTaskInput): Promise<Task[]> => ipcRenderer.invoke('tasks:split', input),
+    listByCompletedDate: (date: string): Promise<Task[]> =>
+      ipcRenderer.invoke('tasks:listByCompletedDate', date)
   },
   folders: {
     list: (): Promise<Folder[]> => ipcRenderer.invoke('folders:list'),

@@ -97,7 +97,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   selectView: async (view) => {
     set({ selectedView: view, selectedTaskId: null })
-    await get().loadTasks()
+    if (view !== 'daily-log') await get().loadTasks()
   },
 
   selectTask: (id) => {

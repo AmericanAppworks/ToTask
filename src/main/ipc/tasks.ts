@@ -169,6 +169,19 @@ export function registerTaskHandlers(ipcMain: IpcMain): void {
     return rows.map(rowToTask)
   })
 
+  ipcMain.handle('tasks:listByCompletedDate', (_, date: string) => {
+    const db = getDb()
+    // Parse as local midnight so the date matches the user's timezone
+    const start = new Date(date + 'T00:00:00').getTime() / 1000
+    const end = start + 86400
+    const rows = db
+      .prepare(
+        `${SELECT_TASK_FIELDS} WHERE t.completed = 1 AND t.completed_at >= ? AND t.completed_at < ? ORDER BY t.completed_at ASC`
+      )
+      .all(start, end) as Record<string, unknown>[]
+    return rows.map(rowToTask)
+  })
+
   ipcMain.handle('tasks:split', (_, input: SplitTaskInput) => {
     const db = getDb()
     const { parent_id, subtasks } = input

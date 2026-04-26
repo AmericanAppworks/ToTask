@@ -70,4 +70,4 @@ export interface Conversation {
   created_at: number
 }
 
-export type SmartList = 'inbox' | 'today' | 'upcoming' | 'all'
+export type SmartList = 'inbox' | 'today' | 'upcoming' | 'all' | 'daily-log'

@@ -1,6 +1,7 @@
 import { useAppStore } from '../../store/app'
 import TaskList from './TaskList'
 import TaskDetail from './TaskDetail'
+import DailyLog from './DailyLog'
 
 function TabButton({
   label,
@@ -37,7 +38,7 @@ function TabButton({
 }
 
 export default function TaskPane() {
-  const { selectedTaskId, openTabIds, tabTitles, selectTask, closeTab } = useAppStore()
+  const { selectedTaskId, selectedView, openTabIds, tabTitles, selectTask, closeTab } = useAppStore()
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -61,12 +62,14 @@ export default function TaskPane() {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        {selectedTaskId === null ? (
-          <TaskList selectedTaskId={null} onSelectTask={selectTask} />
-        ) : (
+        {selectedTaskId !== null ? (
           <div className="h-full overflow-y-auto">
             <TaskDetail taskId={selectedTaskId} onClose={() => closeTab(selectedTaskId)} />
           </div>
+        ) : selectedView === 'daily-log' ? (
+          <DailyLog />
+        ) : (
+          <TaskList selectedTaskId={null} onSelectTask={selectTask} />
         )}
       </div>
     </div>

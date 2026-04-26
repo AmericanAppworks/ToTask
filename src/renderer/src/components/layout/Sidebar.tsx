@@ -6,7 +6,8 @@ const SMART_LISTS: { id: ViewSelection; label: string; icon: string }[] = [
   { id: 'inbox', label: 'Inbox', icon: '📥' },
   { id: 'today', label: 'Today', icon: '☀️' },
   { id: 'upcoming', label: 'Upcoming', icon: '📅' },
-  { id: 'all', label: 'All Tasks', icon: '📋' }
+  { id: 'all', label: 'All Tasks', icon: '📋' },
+  { id: 'daily-log', label: 'Daily Log', icon: '📓' }
 ]
 
 function FolderItem({
