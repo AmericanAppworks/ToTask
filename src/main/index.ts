@@ -6,6 +6,8 @@ import { registerTaskHandlers } from './ipc/tasks'
 import { registerFolderHandlers } from './ipc/folders'
 import { registerTagHandlers } from './ipc/tags'
 import { registerSettingsHandlers } from './ipc/settings'
+import { registerChatHandlers } from './ipc/chat'
+import { startMcpServer } from './mcp/server'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -48,6 +50,10 @@ app.whenReady().then(() => {
   registerFolderHandlers(ipcMain)
   registerTagHandlers(ipcMain)
   registerSettingsHandlers(ipcMain)
+  registerChatHandlers(ipcMain)
+
+  const mcpPort = 3737
+  startMcpServer(mcpPort)
 
   createWindow()
 

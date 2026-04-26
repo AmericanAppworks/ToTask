@@ -17,6 +17,7 @@ interface AppStore {
   tasks: Task[]
   selectedView: ViewSelection
   selectedTaskId: number | null
+  chatTaskContext: Task | null
   showParentTasks: boolean
   isLoadingTasks: boolean
 
@@ -25,6 +26,7 @@ interface AppStore {
   loadTasks: () => Promise<void>
   selectView: (view: ViewSelection) => Promise<void>
   selectTask: (id: number | null) => void
+  setChatContext: (task: Task | null) => void
   setShowParentTasks: (show: boolean) => Promise<void>
 
   createTask: (input: CreateTaskInput) => Promise<Task>
@@ -43,6 +45,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   tasks: [],
   selectedView: 'inbox',
   selectedTaskId: null,
+  chatTaskContext: null,
   showParentTasks: false,
   isLoadingTasks: false,
 
@@ -91,7 +94,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await get().loadTasks()
   },
 
-  selectTask: (id) => set({ selectedTaskId: id }),
+  selectTask: (id) => {
+    set({ selectedTaskId: id })
+    if (id) {
+      const task = get().tasks.find((t) => t.id === id)
+      if (task) {
+        set({ chatTaskContext: task })
+      } else {
+        window.api.tasks.get(id).then((t) => set({ chatTaskContext: t })).catch(() => {})
+      }
+    }
+  },
+
+  setChatContext: (task) => set({ chatTaskContext: task }),
 
   setShowParentTasks: async (show) => {
     set({ showParentTasks: show })
