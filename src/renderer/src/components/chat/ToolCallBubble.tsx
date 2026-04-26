@@ -46,6 +46,10 @@ function summarize(name: string, input: Record<string, unknown>, result: unknown
       const r = result as unknown[]
       return `Listed ${Array.isArray(r) ? r.length : '?'} tags`
     }
+    case 'web_search': {
+      const q = (input as { query?: string }).query
+      return `Searched: "${q ?? '…'}"`
+    }
     default:
       return name
   }
@@ -58,7 +62,7 @@ export default function ToolCallBubble({ tool }: { tool: ToolCall }) {
         ? 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400'
         : 'bg-gray-100 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400'
     }`}>
-      <span>{tool.isError ? '✗' : '⚙'}</span>
+      <span>{tool.isError ? '✗' : tool.name === 'web_search' ? '🔍' : '⚙'}</span>
       <span>{summarize(tool.name, tool.input, tool.result)}</span>
     </div>
   )

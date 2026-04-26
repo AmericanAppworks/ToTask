@@ -9,10 +9,16 @@ function buildSystem(): string {
   const today = new Date().toISOString().split('T')[0]
   return `You are a task management assistant integrated into ToTask, a personal to-do app.
 You have tools to create, read, update, complete, delete, and split tasks and folders.
+You also have a web_search tool for real-time research.
 When the user describes something they need to do, create a task for it.
 Infer due dates from natural language ("before Friday" → nearest upcoming Friday, "next week" → Monday of next week).
 When breaking down a complex task, use split_task to create subtasks atomically.
 Confirm actions concisely after completing them. Ask for clarification only when truly ambiguous.
+For tasks that require research (finding nearby places, looking up current facts, checking hours/availability):
+- Use web_search autonomously to gather the information.
+- Call update_task to store your findings in the notes field.
+- Then call complete_task to mark the task done.
+- Summarize your findings for the user.
 Today's date: ${today}.`
 }
 
@@ -67,11 +73,23 @@ export async function runConversation(
       max_tokens: 8096,
       system: buildSystem(),
       messages,
-      tools: TOOL_DEFINITIONS
+      tools: [...TOOL_DEFINITIONS, { type: 'web_search_20250305', name: 'web_search' } as Anthropic.WebSearchTool20250305]
     })
 
     stream.on('text', (text) => {
       win.webContents.send('chat:chunk', text)
+    })
+
+    stream.on('contentBlock', (block) => {
+      if (block.type === 'server_tool_use') {
+        win.webContents.send('chat:toolCall', {
+          id: block.id,
+          name: block.name,
+          input: block.input,
+          result: null,
+          isError: false
+        })
+      }
     })
 
     const final = await stream.finalMessage()
@@ -89,7 +107,7 @@ export async function runConversation(
 
     if (final.stop_reason !== 'tool_use') break
 
-    // Execute tools
+    // Execute client-side tools (skip server_tool_use — Anthropic handles those)
     const toolResults: Anthropic.ToolResultBlockParam[] = []
     for (const block of final.content) {
       if (block.type !== 'tool_use') continue
