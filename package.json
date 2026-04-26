@@ -9,7 +9,8 @@
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "postinstall": "electron-builder install-app-deps",
-    "package": "electron-vite build && electron-builder"
+    "package": "electron-vite build && electron-builder",
+    "reset": "node scripts/reset-data.mjs"
   },
   "build": {
     "appId": "com.totask.app",
