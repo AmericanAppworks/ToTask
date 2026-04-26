@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { Task, UpdateTaskInput } from '@shared/types'
 import { useAppStore } from '../../store/app'
 import TagInput from './TagInput'
@@ -10,14 +12,38 @@ interface Props {
   onClose: () => void
 }
 
+const mdComponents: React.ComponentProps<typeof ReactMarkdown>['components'] = {
+  h1: ({ children }) => <h1 className="text-base font-bold mt-3 mb-1 text-gray-900 dark:text-gray-100">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-sm font-bold mt-2 mb-1 text-gray-900 dark:text-gray-100">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-sm font-semibold mt-2 mb-0.5 text-gray-800 dark:text-gray-200">{children}</h3>,
+  p: ({ children }) => <p className="text-sm mb-2 last:mb-0 text-gray-700 dark:text-gray-300 leading-relaxed">{children}</p>,
+  ul: ({ children }) => <ul className="text-sm list-disc list-outside pl-4 mb-2 space-y-0.5 text-gray-700 dark:text-gray-300">{children}</ul>,
+  ol: ({ children }) => <ol className="text-sm list-decimal list-outside pl-4 mb-2 space-y-0.5 text-gray-700 dark:text-gray-300">{children}</ol>,
+  li: ({ children }) => <li className="text-sm leading-relaxed">{children}</li>,
+  a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300">{children}</a>,
+  code: ({ children, className }) => className
+    ? <code className="block text-xs bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded font-mono overflow-x-auto mb-2 text-gray-800 dark:text-gray-200">{children}</code>
+    : <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded font-mono text-gray-800 dark:text-gray-200">{children}</code>,
+  pre: ({ children }) => <pre className="mb-2">{children}</pre>,
+  strong: ({ children }) => <strong className="font-semibold text-gray-900 dark:text-gray-100">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  blockquote: ({ children }) => <blockquote className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 my-2 text-gray-600 dark:text-gray-400 italic">{children}</blockquote>,
+  hr: () => <hr className="border-gray-200 dark:border-gray-700 my-3" />,
+  table: ({ children }) => <div className="overflow-x-auto mb-2"><table className="text-xs border-collapse w-full">{children}</table></div>,
+  th: ({ children }) => <th className="text-left border border-gray-300 dark:border-gray-600 px-2 py-1 bg-gray-50 dark:bg-gray-800 font-semibold">{children}</th>,
+  td: ({ children }) => <td className="border border-gray-300 dark:border-gray-600 px-2 py-1">{children}</td>,
+}
+
 export default function TaskDetail({ taskId, onClose }: Props) {
   const [task, setTask] = useState<Task | null>(null)
   const [title, setTitle] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [notes, setNotes] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const { updateTask, deleteTask, selectTask, completeTask } = useAppStore()
+  const [notesEditMode, setNotesEditMode] = useState(false)
+  const { updateTask, deleteTask, selectTask, completeTask, setTabTitle } = useAppStore()
   const titleRef = useRef<HTMLInputElement>(null)
+  const notesRef = useRef<HTMLTextAreaElement>(null)
   const pendingUpdate = useRef<UpdateTaskInput>({})
 
   async function load(id: number) {
@@ -27,10 +53,23 @@ export default function TaskDetail({ taskId, onClose }: Props) {
     setDueDate(t.due_date ?? '')
     setNotes(t.notes ?? '')
     setTags(t.tags)
+    setTabTitle(id, t.title)
     pendingUpdate.current = {}
   }
 
   useEffect(() => { load(taskId) }, [taskId])
+
+  useEffect(() => {
+    if (notesEditMode && notesRef.current) {
+      notesRef.current.focus()
+      autoResize(notesRef.current)
+    }
+  }, [notesEditMode])
+
+  function autoResize(el: HTMLTextAreaElement) {
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }
 
   async function flush() {
     if (Object.keys(pendingUpdate.current).length === 0) return
@@ -45,7 +84,10 @@ export default function TaskDetail({ taskId, onClose }: Props) {
   async function handleTitleBlur() {
     const trimmed = title.trim()
     if (!trimmed || !task) return
-    if (trimmed !== task.title) markDirty({ title: trimmed })
+    if (trimmed !== task.title) {
+      markDirty({ title: trimmed })
+      setTabTitle(taskId, trimmed)
+    }
     await flush()
   }
 
@@ -53,6 +95,7 @@ export default function TaskDetail({ taskId, onClose }: Props) {
     if (!task) return
     if (notes !== (task.notes ?? '')) markDirty({ notes: notes || null })
     await flush()
+    setNotesEditMode(false)
   }
 
   async function handleDueDateChange(value: string) {
@@ -79,7 +122,7 @@ export default function TaskDetail({ taskId, onClose }: Props) {
 
   if (!task) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex items-center justify-center h-32">
         <span className="text-sm text-gray-400">Loading…</span>
       </div>
     )
@@ -132,17 +175,37 @@ export default function TaskDetail({ taskId, onClose }: Props) {
         </div>
       </div>
 
-      {/* Notes */}
+      {/* Notes — rendered markdown or editable textarea */}
       <div className="flex items-start gap-2">
         <span className="text-xs text-gray-500 dark:text-gray-400 w-12 shrink-0 pt-1">Notes</span>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          onBlur={handleNotesBlur}
-          placeholder="Add notes…"
-          rows={3}
-          className="flex-1 text-sm bg-transparent outline-none resize-none text-gray-700 dark:text-gray-300 placeholder-gray-400 border rounded border-transparent focus:border-gray-300 dark:focus:border-gray-600 transition-colors p-1"
-        />
+        <div className="flex-1 min-w-0">
+          {notesEditMode ? (
+            <textarea
+              ref={notesRef}
+              value={notes}
+              onChange={(e) => { setNotes(e.target.value); autoResize(e.target) }}
+              onBlur={handleNotesBlur}
+              placeholder="Add notes… (markdown supported)"
+              className="w-full text-sm bg-transparent outline-none resize-none text-gray-700 dark:text-gray-300 placeholder-gray-400 border rounded border-gray-300 dark:border-gray-600 transition-colors p-1 font-mono leading-relaxed min-h-[80px]"
+              style={{ height: 'auto' }}
+            />
+          ) : (
+            <div
+              onClick={() => setNotesEditMode(true)}
+              className={`min-h-[32px] rounded px-1 py-0.5 cursor-text hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors ${
+                notes ? '' : 'text-gray-400 text-sm'
+              }`}
+            >
+              {notes ? (
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>
+                  {notes}
+                </ReactMarkdown>
+              ) : (
+                <span className="text-sm">Add notes…</span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Subtasks */}

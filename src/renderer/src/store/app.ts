@@ -17,6 +17,8 @@ interface AppStore {
   tasks: Task[]
   selectedView: ViewSelection
   selectedTaskId: number | null
+  openTabIds: number[]
+  tabTitles: Record<number, string>
   chatTaskContext: Task | null
   showParentTasks: boolean
   isLoadingTasks: boolean
@@ -26,6 +28,8 @@ interface AppStore {
   loadTasks: () => Promise<void>
   selectView: (view: ViewSelection) => Promise<void>
   selectTask: (id: number | null) => void
+  closeTab: (id: number) => void
+  setTabTitle: (id: number, title: string) => void
   setChatContext: (task: Task | null) => void
   setShowParentTasks: (show: boolean) => Promise<void>
 
@@ -45,6 +49,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   tasks: [],
   selectedView: 'inbox',
   selectedTaskId: null,
+  openTabIds: [],
+  tabTitles: {},
   chatTaskContext: null,
   showParentTasks: false,
   isLoadingTasks: false,
@@ -96,14 +102,35 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   selectTask: (id) => {
     set({ selectedTaskId: id })
-    if (id) {
-      const task = get().tasks.find((t) => t.id === id)
+    if (id !== null) {
+      const { openTabIds, tasks } = get()
+      if (!openTabIds.includes(id)) {
+        set({ openTabIds: [...openTabIds, id] })
+      }
+      const task = tasks.find((t) => t.id === id)
       if (task) {
-        set({ chatTaskContext: task })
+        set((s) => ({ chatTaskContext: task, tabTitles: { ...s.tabTitles, [id]: task.title } }))
       } else {
-        window.api.tasks.get(id).then((t) => set({ chatTaskContext: t })).catch(() => {})
+        window.api.tasks.get(id).then((t) => {
+          set((s) => ({ chatTaskContext: t, tabTitles: { ...s.tabTitles, [id]: t.title } }))
+        }).catch(() => {})
       }
     }
+  },
+
+  closeTab: (id) => {
+    const { openTabIds, selectedTaskId } = get()
+    const newTabs = openTabIds.filter((t) => t !== id)
+    let newSelected = selectedTaskId
+    if (selectedTaskId === id) {
+      const idx = openTabIds.indexOf(id)
+      newSelected = newTabs[idx - 1] ?? newTabs[0] ?? null
+    }
+    set({ openTabIds: newTabs, selectedTaskId: newSelected })
+  },
+
+  setTabTitle: (id, title) => {
+    set((s) => ({ tabTitles: { ...s.tabTitles, [id]: title } }))
   },
 
   setChatContext: (task) => set({ chatTaskContext: task }),
@@ -117,7 +144,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   createTask: async (input) => {
     const task = await window.api.tasks.create(input)
     await get().loadTasks()
-    set({ selectedTaskId: task.id })
+    get().selectTask(task.id)
     return task
   },
 
@@ -129,7 +156,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   deleteTask: async (id) => {
     await window.api.tasks.delete(id)
-    if (get().selectedTaskId === id) set({ selectedTaskId: null })
+    get().closeTab(id)
     await get().loadTasks()
   },
 
