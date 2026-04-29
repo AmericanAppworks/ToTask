@@ -378,20 +378,21 @@ export default function OutlineView() {
   }, [load])
 
   const indent = useCallback(async (id: number) => {
-    const flat = flattenIds(rootsRef.current, expandedRef.current)
-    const idx = flat.indexOf(id)
-    if (idx <= 0) return
-    const prevId = flat[idx - 1]
-    const current = allTasksRef.current.get(id)!
-    if (current.parent_id === prevId) return
-    const prevNode = findNode(rootsRef.current, prevId)
+    // Tab = become a child of the previous *sibling* (same parent, immediately above).
+    // Using the previous visible item instead would go one extra level deep when
+    // that item is itself already indented.
+    const siblings = findSiblingList(rootsRef.current, id)
+    if (!siblings) return
+    const idx = siblings.findIndex(n => n.id === id)
+    if (idx <= 0) return // no previous sibling to nest under
+    const prevSibling = siblings[idx - 1]
+    const prevSiblingNode = findNode(rootsRef.current, prevSibling.id)!
     await window.api.tasks.update(id, {
-      parent_id: prevId,
-      folder_id: allTasksRef.current.get(prevId)?.folder_id ?? null,
-      sort_order: (prevNode?.children.length ?? 0) * 1000,
+      parent_id: prevSibling.id,
+      folder_id: prevSibling.folder_id,
+      sort_order: prevSiblingNode.children.length * 1000,
     })
-    // auto-expand the new parent
-    setExpanded(prev => { const next = new Set(prev); next.add(prevId); expandedRef.current = next; return next })
+    setExpanded(prev => { const next = new Set(prev); next.add(prevSibling.id); expandedRef.current = next; return next })
     pendingFocusId.current = id
     await load()
   }, [load])
