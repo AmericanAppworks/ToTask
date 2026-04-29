@@ -64,6 +64,10 @@ const migrations: Migration[] = [
       INSERT OR IGNORE INTO settings (key, value) VALUES ('show_parent_tasks', 'false');
       INSERT OR IGNORE INTO settings (key, value) VALUES ('mcp_port', '3737');
     `
+  },
+  {
+    version: 2,
+    sql: `ALTER TABLE tasks ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;`
   }
 ]
 

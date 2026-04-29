@@ -2,6 +2,7 @@ import { useAppStore } from '../../store/app'
 import TaskList from './TaskList'
 import TaskDetail from './TaskDetail'
 import DailyLog from './DailyLog'
+import OutlineView from './OutlineView'
 
 function TabButton({
   label,
@@ -38,7 +39,7 @@ function TabButton({
 }
 
 export default function TaskPane() {
-  const { selectedTaskId, selectedView, openTabIds, tabTitles, selectTask, closeTab } = useAppStore()
+  const { selectedTaskId, selectedView, viewMode, openTabIds, tabTitles, selectTask, closeTab, setViewMode } = useAppStore()
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -58,6 +59,34 @@ export default function TaskPane() {
             onClose={() => closeTab(id)}
           />
         ))}
+
+        {/* View mode toggle — only on the Tasks tab, not daily-log */}
+        {selectedTaskId === null && selectedView !== 'daily-log' && (
+          <div className="ml-auto flex items-center gap-0.5 pb-1 pr-1">
+            <button
+              onClick={() => setViewMode('list')}
+              title="List view"
+              className={`px-2 py-0.5 rounded text-xs transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
+            >
+              ☰
+            </button>
+            <button
+              onClick={() => setViewMode('outline')}
+              title="Outline view"
+              className={`px-2 py-0.5 rounded text-xs transition-colors ${
+                viewMode === 'outline'
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              }`}
+            >
+              ⊞
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -68,6 +97,8 @@ export default function TaskPane() {
           </div>
         ) : selectedView === 'daily-log' ? (
           <DailyLog />
+        ) : viewMode === 'outline' ? (
+          <OutlineView />
         ) : (
           <TaskList selectedTaskId={null} onSelectTask={selectTask} />
         )}

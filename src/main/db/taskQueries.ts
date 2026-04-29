@@ -27,7 +27,8 @@ export function rowToTask(row: Record<string, unknown>): Task {
     updated_at: row.updated_at as number,
     tags: row.tags_raw ? (row.tags_raw as string).split(',').filter(Boolean) : [],
     subtask_count: row.subtask_count as number,
-    incomplete_subtask_count: row.incomplete_subtask_count as number
+    incomplete_subtask_count: row.incomplete_subtask_count as number,
+    sort_order: (row.sort_order as number) ?? 0
   }
 }
 

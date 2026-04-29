@@ -16,6 +16,7 @@ interface AppStore {
   folders: Folder[]
   tasks: Task[]
   selectedView: ViewSelection
+  viewMode: 'list' | 'outline'
   selectedTaskId: number | null
   openTabIds: number[]
   tabTitles: Record<number, string>
@@ -31,6 +32,7 @@ interface AppStore {
   closeTab: (id: number) => void
   setTabTitle: (id: number, title: string) => void
   setChatContext: (task: Task | null) => void
+  setViewMode: (mode: 'list' | 'outline') => void
   setShowParentTasks: (show: boolean) => Promise<void>
 
   createTask: (input: CreateTaskInput) => Promise<Task>
@@ -48,6 +50,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   folders: [],
   tasks: [],
   selectedView: 'inbox',
+  viewMode: 'list',
   selectedTaskId: null,
   openTabIds: [],
   tabTitles: {},
@@ -132,6 +135,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setTabTitle: (id, title) => {
     set((s) => ({ tabTitles: { ...s.tabTitles, [id]: title } }))
   },
+
+  setViewMode: (mode) => set({ viewMode: mode }),
 
   setChatContext: (task) => set({ chatTaskContext: task }),
 

@@ -169,6 +169,14 @@ export function registerTaskHandlers(ipcMain: IpcMain): void {
     return rows.map(rowToTask)
   })
 
+  ipcMain.handle('tasks:reorder', (_, orderedIds: number[]) => {
+    const db = getDb()
+    const update = db.prepare('UPDATE tasks SET sort_order = ?, updated_at = unixepoch() WHERE id = ?')
+    db.transaction(() => {
+      orderedIds.forEach((id, index) => update.run(index, id))
+    })()
+  })
+
   ipcMain.handle('tasks:listByCompletedDate', (_, date: string) => {
     const db = getDb()
     // Parse as local midnight so the date matches the user's timezone

@@ -18,6 +18,7 @@ export interface Task {
   tags: string[]
   subtask_count: number
   incomplete_subtask_count: number
+  sort_order: number
 }
 
 export interface TaskFilters {
