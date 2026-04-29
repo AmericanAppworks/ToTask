@@ -147,7 +147,9 @@ function OutlineItem({ node, depth }: { node: TreeNode; depth: number }) {
       e.shiftKey ? ctx.unindent(node.id) : ctx.indent(node.id)
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      if (e.shiftKey) {
+      if (e.metaKey) {
+        ctx.complete(node.id)
+      } else if (e.shiftKey) {
         ctx.setEditingNoteId(node.id)
       } else {
         ctx.saveTitle(node.id, localTitle).then(() => ctx.createBelow(node.id))
@@ -163,13 +165,6 @@ function OutlineItem({ node, depth }: { node: TreeNode; depth: number }) {
       ctx.focusNext(node.id)
     } else if (e.key === 'Escape') {
       e.currentTarget.blur()
-    }
-  }
-
-  function handleTitleClick(e: React.MouseEvent<HTMLInputElement>) {
-    if (e.metaKey) {
-      e.preventDefault()
-      ctx.complete(node.id)
     }
   }
 
@@ -231,7 +226,6 @@ function OutlineItem({ node, depth }: { node: TreeNode; depth: number }) {
           onBlur={() => { isFocused.current = false; ctx.saveTitle(node.id, localTitle) }}
           onFocus={() => { isFocused.current = true }}
           onKeyDown={handleTitleKeyDown}
-          onClick={handleTitleClick}
           className={`flex-1 min-w-0 bg-transparent outline-none text-sm leading-6 pr-4 ${
             node.completed
               ? 'line-through text-gray-400 dark:text-gray-600'
@@ -278,16 +272,6 @@ function OutlineItem({ node, depth }: { node: TreeNode; depth: number }) {
               {line}
             </p>
           ))}
-        </div>
-      ) : hovering ? (
-        <div
-          style={{ paddingLeft: contentLeft }}
-          onClick={() => ctx.setEditingNoteId(node.id)}
-          className="cursor-text mb-0.5 pl-2"
-        >
-          <p className="text-xs text-gray-300 dark:text-gray-700 leading-[18px] select-none">
-            Shift+Enter to add note
-          </p>
         </div>
       ) : null}
 
