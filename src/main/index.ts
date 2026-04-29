@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { initDatabase } from './db/database'
@@ -51,6 +51,7 @@ app.whenReady().then(() => {
   registerTagHandlers(ipcMain)
   registerSettingsHandlers(ipcMain)
   registerChatHandlers(ipcMain)
+  ipcMain.handle('shell:openExternal', (_event: IpcMainInvokeEvent, url: string) => shell.openExternal(url))
 
   const mcpPort = 3737
   startMcpServer(mcpPort)

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react'
 import { useAppStore, type ViewSelection } from '../../store/app'
 import type { Folder } from '@shared/types'
+import SettingsModal from './SettingsModal'
 
 const SMART_LISTS: { id: ViewSelection; label: string; icon: string }[] = [
   { id: 'inbox', label: 'Inbox', icon: '📥' },
@@ -83,6 +84,7 @@ export default function Sidebar() {
   const { folders, selectedView, selectView, createFolder, updateFolder, deleteFolder } = useAppStore()
   const [addingFolder, setAddingFolder] = useState(false)
   const [newFolderName, setNewFolderName] = useState('')
+  const [showSettings, setShowSettings] = useState(false)
   const folderInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -106,6 +108,8 @@ export default function Sidebar() {
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900/50 overflow-hidden">
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
       {/* Drag region + app title (clears macOS traffic lights) */}
       <div
         className="flex items-end h-8 px-4 pb-1 shrink-0"
@@ -180,6 +184,17 @@ export default function Sidebar() {
           )}
         </div>
       </nav>
+
+      {/* Settings button */}
+      <div className="shrink-0 px-3 py-2 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => setShowSettings(true)}
+          className="flex items-center gap-2 w-full px-2 py-1.5 rounded text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+        >
+          <span className="text-xs">⚙️</span>
+          Settings
+        </button>
+      </div>
     </div>
   )
 }

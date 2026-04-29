@@ -91,6 +91,29 @@ export default function ChatPanel() {
     setMessages(parseHistory(history as Parameters<typeof parseHistory>[0]))
   }
 
+  // Register error handler
+  useEffect(() => {
+    const off = window.api.chat.onError((error: string) => {
+      if (error === 'NO_API_KEY') {
+        setApiKeyState('missing')
+      }
+      setMessages((prev) => {
+        const last = prev[prev.length - 1]
+        if (last?.isStreaming) {
+          const errText =
+            error === 'NO_API_KEY'
+              ? 'No API key configured. Use Settings in the sidebar to add one.'
+              : `Error: ${error}`
+          return [...prev.slice(0, -1), { ...last, content: errText, isStreaming: false }]
+        }
+        return prev
+      })
+      pendingIdRef.current = null
+      setIsLoading(false)
+    })
+    return () => { off() }
+  }, [])
+
   // Register streaming event listeners
   const handleChunk = useCallback((chunk: string) => {
     setMessages((prev) => {

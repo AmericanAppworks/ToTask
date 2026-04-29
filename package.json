@@ -2,6 +2,7 @@
   "name": "totask",
   "version": "0.1.0",
   "description": "Personal to-do app with Claude AI integration",
+  "author": "Andrew Kvochick",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -10,7 +11,10 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "postinstall": "electron-builder install-app-deps",
     "package": "electron-vite build && electron-builder",
-    "reset": "node scripts/reset-data.mjs"
+    "package:mac": "electron-vite build && electron-builder --mac",
+    "package:win": "electron-vite build && electron-builder --win",
+    "reset": "node scripts/reset-data.mjs",
+    "generate-icons": "node scripts/generate-icons.mjs"
   },
   "build": {
     "appId": "com.totask.app",
@@ -22,8 +26,19 @@
       "out/**/*"
     ],
     "mac": {
-      "target": "dmg",
-      "category": "public.app-category.productivity"
+      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }],
+      "category": "public.app-category.productivity",
+      "icon": "resources/icon.icns",
+      "identity": "Developer ID Application",
+      "notarize": { "teamId": "9KR82BWC63" }
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "resources/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
     },
     "npmRebuild": true
   },

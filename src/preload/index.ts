@@ -68,7 +68,7 @@ const api = {
     },
     onError: (callback: (error: string) => void) => {
       const handler = (_: Electron.IpcRendererEvent, error: string): void => callback(error)
-      ipcRenderer.once('chat:error', handler)
+      ipcRenderer.on('chat:error', handler)
       return () => ipcRenderer.off('chat:error', handler)
     }
   },
@@ -76,6 +76,9 @@ const api = {
     get: (key: string): Promise<string | null> => ipcRenderer.invoke('settings:get', key),
     set: (key: string, value: string): Promise<void> =>
       ipcRenderer.invoke('settings:set', key, value)
+  },
+  shell: {
+    openExternal: (url: string): Promise<void> => ipcRenderer.invoke('shell:openExternal', url)
   }
 }
 
