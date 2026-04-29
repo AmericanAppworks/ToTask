@@ -13,6 +13,7 @@
     "package": "electron-vite build && electron-builder",
     "package:mac": "electron-vite build && electron-builder --mac",
     "package:win": "electron-vite build && electron-builder --win",
+    "setup-mcp": "node scripts/setup-mcp.mjs",
     "reset": "node scripts/reset-data.mjs",
     "generate-icons": "node scripts/generate-icons.mjs"
   },
