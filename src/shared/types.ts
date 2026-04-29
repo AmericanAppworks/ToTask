@@ -46,6 +46,7 @@ export interface UpdateTaskInput {
   due_date?: string | null
   notes?: string | null
   tags?: string[]
+  sort_order?: number
 }
 
 export interface SplitTaskInput {

@@ -128,6 +128,10 @@ export function registerTaskHandlers(ipcMain: IpcMain): void {
       setClauses.push('notes = ?')
       params.push(input.notes)
     }
+    if (input.sort_order !== undefined) {
+      setClauses.push('sort_order = ?')
+      params.push(input.sort_order)
+    }
 
     db.prepare(`UPDATE tasks SET ${setClauses.join(', ')} WHERE id = ?`).run(...params, id)
 
