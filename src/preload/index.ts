@@ -74,8 +74,9 @@ const api = {
   },
   tasks_events: {
     onChanged: (callback: () => void) => {
-      ipcRenderer.on('tasks:changed', callback)
-      return () => ipcRenderer.off('tasks:changed', callback)
+      const handler = (_: Electron.IpcRendererEvent): void => callback()
+      ipcRenderer.on('tasks:changed', handler)
+      return () => ipcRenderer.off('tasks:changed', handler)
     }
   },
   settings: {
