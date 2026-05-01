@@ -163,15 +163,20 @@ export default function TaskList({ onSelectTask, selectedTaskId }: Props) {
 
       {/* Archive confirmation dialog */}
       {showArchiveConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowArchiveConfirm(false) }}
+        >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="archive-dialog-title"
+            aria-describedby="archive-dialog-desc"
             className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-5 w-80 space-y-3"
+            onKeyDown={(e) => { if (e.key === 'Escape') setShowArchiveConfirm(false) }}
           >
             <h3 id="archive-dialog-title" className="text-sm font-semibold text-gray-900 dark:text-gray-100">Archive completed tasks?</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p id="archive-dialog-desc" className="text-xs text-gray-500 dark:text-gray-400">
               All completed tasks will be archived and hidden from every view except the Daily Log. This action cannot be undone.
             </p>
             <div className="flex justify-end gap-2 pt-1">
