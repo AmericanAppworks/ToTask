@@ -61,10 +61,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
   isLoadingTasks: false,
 
   init: async () => {
+    _unsubscribeTasksChanged?.()
+    _unsubscribeTasksChanged = undefined
+
     const showParents = await window.api.settings.get('show_parent_tasks')
     set({ showParentTasks: showParents === 'true' })
     await Promise.all([get().loadFolders(), get().loadTasks()])
-    _unsubscribeTasksChanged?.()
     _unsubscribeTasksChanged = window.api.tasks_events.onChanged(async () => {
       await Promise.all([get().loadFolders(), get().loadTasks()])
     })
