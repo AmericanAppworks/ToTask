@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Generates resources/icon.icns, resources/icon.ico, and resources/icon.png from resources/icon.svg
-// Requires: macOS (uses sips + iconutil); .ico uses a PNG renamed with .ico extension
-// For a proper multi-resolution .ico on Windows, install ImageMagick: brew install imagemagick
+// Cross-platform: uses Python (cairosvg + Pillow) for rasterization and icon building.
+// Install deps once: pip install cairosvg Pillow
+// macOS native fallback: sips + iconutil (used automatically when Python libs are unavailable)
 
 import { execSync } from 'child_process'
 import { mkdirSync, rmSync, existsSync, copyFileSync, writeFileSync } from 'fs'
@@ -12,14 +13,50 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
 const resources = join(root, 'resources')
 const svg = join(resources, 'icon.svg')
-const iconsetDir = join(resources, 'icon.iconset')
 
 if (!existsSync(svg)) {
   console.error('resources/icon.svg not found')
   process.exit(1)
 }
 
-// Rasterize SVG → 1024×1024 PNG
+// Try Python-based cross-platform generation first (cairosvg + Pillow)
+// This correctly preserves SVG transparency so rounded-rect icons have transparent corners.
+const pythonScript = `
+import cairosvg, io, os, sys
+from PIL import Image
+
+svg_path = sys.argv[1]
+resources = sys.argv[2]
+
+png_data = cairosvg.svg2png(url=svg_path, output_width=1024, output_height=1024, background_color=None)
+img1024 = Image.open(io.BytesIO(png_data)).convert('RGBA')
+
+img512 = img1024.resize((512, 512), Image.LANCZOS)
+img512.save(os.path.join(resources, 'icon.png'), 'PNG')
+
+icns_sizes = [16, 32, 64, 128, 256, 512, 1024]
+imgs = [img1024.resize((s, s), Image.LANCZOS) for s in icns_sizes]
+imgs[0].save(os.path.join(resources, 'icon.icns'), format='ICNS',
+             sizes=[(s, s) for s in icns_sizes], append_images=imgs[1:])
+
+ico_sizes = [(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)]
+ico_imgs = [img1024.resize(s, Image.LANCZOS) for s in ico_sizes]
+ico_imgs[0].save(os.path.join(resources, 'icon.ico'), format='ICO',
+                 sizes=ico_sizes, append_images=ico_imgs[1:])
+
+print('Generated: resources/icon.icns, resources/icon.ico, resources/icon.png')
+`
+
+try {
+  execSync(`python3 -c "${pythonScript.replace(/"/g, '\\"')}" "${svg}" "${resources}"`, { stdio: 'inherit' })
+  process.exit(0)
+} catch {
+  console.warn('Python/cairosvg generation failed — falling back to macOS native tools (sips + iconutil).')
+  console.warn('For cross-platform support: pip install cairosvg Pillow')
+}
+
+// macOS-only fallback: rsvg-convert / qlmanage → sips → iconutil
+const iconsetDir = join(resources, 'icon.iconset')
 const tmpPng = join(resources, '_icon_tmp.png')
 
 try {
@@ -34,8 +71,9 @@ try {
   } catch {
     console.error(
       'Could not rasterize SVG.\n' +
-      'Option A: brew install librsvg then re-run.\n' +
-      'Option B: open resources/icon.svg in Preview, export as 1024×1024 PNG to resources/_icon_tmp.png, then re-run.'
+      'Option A: pip install cairosvg Pillow then re-run.\n' +
+      'Option B: brew install librsvg then re-run.\n' +
+      'Option C: open resources/icon.svg in Preview, export as 1024×1024 PNG to resources/_icon_tmp.png, then re-run.'
     )
     process.exit(1)
   }
@@ -58,7 +96,6 @@ execSync(`iconutil -c icns "${iconsetDir}" -o "${join(resources, 'icon.icns')}"`
 copyFileSync(join(iconsetDir, 'icon_512x512.png'), join(resources, 'icon.png'))
 
 // icon.ico — try ImageMagick first, fall back to a 256px PNG renamed .ico
-// (electron-builder accepts PNG-in-.ico for basic use; for a real multi-res .ico use ImageMagick)
 const ico256 = join(iconsetDir, 'icon_256x256.png')
 const icoPath = join(resources, 'icon.ico')
 try {
@@ -75,7 +112,6 @@ try {
   )
   console.log('Built multi-resolution .ico with ImageMagick')
 } catch {
-  // ImageMagick not available — use a 256px PNG as a .ico stand-in
   copyFileSync(ico256, icoPath)
   console.warn(
     'ImageMagick not found — created a single-size .ico (256px).\n' +
