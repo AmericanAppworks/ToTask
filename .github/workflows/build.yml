@@ -25,7 +25,7 @@ jobs:
       - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: ToTask-Windows
+          name: ToTask-Windows-${{ github.ref_name }}
           path: dist/*.exe
 
   build-mac:
@@ -65,7 +65,7 @@ jobs:
       - name: Upload DMGs
         uses: actions/upload-artifact@v4
         with:
-          name: ToTask-Mac
+          name: ToTask-Mac-${{ github.ref_name }}
           path: dist/*.dmg
 
   release:
@@ -83,6 +83,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           files: |
-            ToTask-Windows/*.exe
-            ToTask-Mac/*.dmg
+            ToTask-Windows-${{ github.ref_name }}/*.exe
+            ToTask-Mac-${{ github.ref_name }}/*.dmg
           generate_release_notes: true
