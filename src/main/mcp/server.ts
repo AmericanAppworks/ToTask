@@ -10,7 +10,16 @@ import {
 } from './tools'
 
 function notifyTasksChanged(): void {
-  BrowserWindow.getAllWindows().forEach((w) => w.webContents.send('tasks:changed'))
+  BrowserWindow.getAllWindows().forEach((w) => {
+    if (w.isDestroyed()) return
+    const { webContents } = w
+    if (webContents.isDestroyed()) return
+    try {
+      webContents.send('tasks:changed')
+    } catch {
+      // Best-effort notification: window/webContents may be tearing down.
+    }
+  })
 }
 
 let httpServer: http.Server | null = null
