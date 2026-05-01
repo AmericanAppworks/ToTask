@@ -5,9 +5,10 @@
 // macOS native fallback: sips + iconutil (used automatically when Python libs are unavailable)
 
 import { execSync } from 'child_process'
-import { mkdirSync, rmSync, existsSync, copyFileSync, writeFileSync } from 'fs'
+import { mkdirSync, rmSync, existsSync, copyFileSync, writeFileSync, mkdtempSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { tmpdir } from 'os'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = join(__dirname, '..')
@@ -47,12 +48,17 @@ ico_imgs[0].save(os.path.join(resources, 'icon.ico'), format='ICO',
 print('Generated: resources/icon.icns, resources/icon.ico, resources/icon.png')
 `
 
+const tmpDir = mkdtempSync(join(tmpdir(), 'generate-icons-'))
+const tmpScript = join(tmpDir, 'gen_icons.py')
 try {
-  execSync(`python3 -c "${pythonScript.replace(/"/g, '\\"')}" "${svg}" "${resources}"`, { stdio: 'inherit' })
+  writeFileSync(tmpScript, pythonScript)
+  execSync(`python3 "${tmpScript}" "${svg}" "${resources}"`, { stdio: 'inherit' })
   process.exit(0)
 } catch {
   console.warn('Python/cairosvg generation failed — falling back to macOS native tools (sips + iconutil).')
   console.warn('For cross-platform support: pip install cairosvg Pillow')
+} finally {
+  rmSync(tmpDir, { recursive: true })
 }
 
 // macOS-only fallback: rsvg-convert / qlmanage → sips → iconutil
