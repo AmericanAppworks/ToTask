@@ -72,6 +72,12 @@ const api = {
       return () => ipcRenderer.off('chat:error', handler)
     }
   },
+  tasks_events: {
+    onChanged: (callback: () => void) => {
+      ipcRenderer.on('tasks:changed', callback)
+      return () => ipcRenderer.off('tasks:changed', callback)
+    }
+  },
   settings: {
     get: (key: string): Promise<string | null> => ipcRenderer.invoke('settings:get', key),
     set: (key: string, value: string): Promise<void> =>

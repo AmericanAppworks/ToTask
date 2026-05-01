@@ -46,6 +46,8 @@ interface AppStore {
   deleteFolder: (id: number) => Promise<void>
 }
 
+let _unsubscribeTasksChanged: (() => void) | undefined
+
 export const useAppStore = create<AppStore>((set, get) => ({
   folders: [],
   tasks: [],
@@ -62,6 +64,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const showParents = await window.api.settings.get('show_parent_tasks')
     set({ showParentTasks: showParents === 'true' })
     await Promise.all([get().loadFolders(), get().loadTasks()])
+    _unsubscribeTasksChanged?.()
+    _unsubscribeTasksChanged = window.api.tasks_events.onChanged(async () => {
+      await Promise.all([get().loadFolders(), get().loadTasks()])
+    })
   },
 
   loadFolders: async () => {

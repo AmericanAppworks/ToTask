@@ -34,6 +34,11 @@ function buildUserContent(message: string, taskContext?: Task | null): string {
   return `${parts.join('')}\n\n${message}`
 }
 
+const MUTATING_TOOLS = new Set([
+  'create_task', 'update_task', 'complete_task', 'delete_task', 'split_task',
+  'create_folder', 'delete_folder'
+])
+
 export async function runConversation(
   apiKey: string,
   conversationId: number,
@@ -129,6 +134,10 @@ export async function runConversation(
         result,
         isError
       })
+
+      if (!isError && MUTATING_TOOLS.has(block.name)) {
+        win.webContents.send('tasks:changed')
+      }
 
       toolResults.push({
         type: 'tool_result',

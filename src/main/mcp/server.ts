@@ -1,5 +1,6 @@
 import http from 'node:http'
 import { randomUUID } from 'node:crypto'
+import { BrowserWindow } from 'electron'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { z } from 'zod'
@@ -7,6 +8,10 @@ import {
   listTasks, getTask, createTask, updateTask, completeTask, deleteTask, splitTask,
   listFolders, createFolder, deleteFolder, listTags
 } from './tools'
+
+function notifyTasksChanged(): void {
+  BrowserWindow.getAllWindows().forEach((w) => w.webContents.send('tasks:changed'))
+}
 
 let httpServer: http.Server | null = null
 
@@ -34,9 +39,11 @@ function buildMcpServer(): McpServer {
     due_date: z.string().optional(),
     notes: z.string().optional(),
     tags: z.array(z.string()).optional()
-  }, (input) => ({
-    content: [{ type: 'text' as const, text: JSON.stringify(createTask(input)) }]
-  }))
+  }, (input) => {
+    const result = createTask(input)
+    notifyTasksChanged()
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  })
 
   mcp.tool('split_task', 'Split a task into subtasks atomically.', {
     parent_id: z.number(),
@@ -45,9 +52,11 @@ function buildMcpServer(): McpServer {
       due_date: z.string().optional(),
       notes: z.string().optional()
     }))
-  }, ({ parent_id, subtasks }) => ({
-    content: [{ type: 'text' as const, text: JSON.stringify(splitTask(parent_id, subtasks)) }]
-  }))
+  }, ({ parent_id, subtasks }) => {
+    const result = splitTask(parent_id, subtasks)
+    notifyTasksChanged()
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  })
 
   mcp.tool('update_task', 'Update fields on a task.', {
     id: z.number(),
@@ -56,19 +65,24 @@ function buildMcpServer(): McpServer {
     due_date: z.string().optional(),
     notes: z.string().optional(),
     tags: z.array(z.string()).optional()
-  }, ({ id, ...rest }) => ({
-    content: [{ type: 'text' as const, text: JSON.stringify(updateTask(id, rest)) }]
-  }))
+  }, ({ id, ...rest }) => {
+    const result = updateTask(id, rest)
+    notifyTasksChanged()
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  })
 
   mcp.tool('complete_task', 'Mark a task complete or incomplete.', {
     id: z.number(),
     completed: z.boolean()
-  }, ({ id, completed }) => ({
-    content: [{ type: 'text' as const, text: JSON.stringify(completeTask(id, completed)) }]
-  }))
+  }, ({ id, completed }) => {
+    const result = completeTask(id, completed)
+    notifyTasksChanged()
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  })
 
   mcp.tool('delete_task', 'Delete a task and its subtasks.', { id: z.number() }, ({ id }) => {
     deleteTask(id)
+    notifyTasksChanged()
     return { content: [{ type: 'text' as const, text: JSON.stringify({ deleted: true }) }] }
   })
 
@@ -76,12 +90,15 @@ function buildMcpServer(): McpServer {
     content: [{ type: 'text' as const, text: JSON.stringify(listFolders()) }]
   }))
 
-  mcp.tool('create_folder', 'Create a folder.', { name: z.string() }, ({ name }) => ({
-    content: [{ type: 'text' as const, text: JSON.stringify(createFolder(name)) }]
-  }))
+  mcp.tool('create_folder', 'Create a folder.', { name: z.string() }, ({ name }) => {
+    const result = createFolder(name)
+    notifyTasksChanged()
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  })
 
   mcp.tool('delete_folder', 'Delete a folder (tasks become unfoldered).', { id: z.number() }, ({ id }) => {
     deleteFolder(id)
+    notifyTasksChanged()
     return { content: [{ type: 'text' as const, text: JSON.stringify({ deleted: true }) }] }
   })
 
