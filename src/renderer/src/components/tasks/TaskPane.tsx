@@ -39,7 +39,7 @@ function TabButton({
 }
 
 export default function TaskPane() {
-  const { selectedTaskId, selectedView, viewMode, openTabIds, tabTitles, selectTask, closeTab, setViewMode } = useAppStore()
+  const { selectedTaskId, selectedView, viewMode, openTabIds, tabTitles, showChatPanel, selectTask, closeTab, setViewMode, toggleChatPanel } = useAppStore()
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -87,6 +87,19 @@ export default function TaskPane() {
             </button>
           </div>
         )}
+        {/* Chat panel toggle — always visible on the right */}
+        {(selectedTaskId !== null || selectedView === 'daily-log') && <div className="ml-auto" />}
+        <button
+          onClick={() => toggleChatPanel()}
+          title={showChatPanel ? 'Hide chat panel' : 'Show chat panel'}
+          className={`ml-1 mb-1 px-2 py-0.5 rounded text-xs transition-colors ${
+            showChatPanel
+              ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+              : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+          }`}
+        >
+          💬
+        </button>
       </div>
 
       {/* Content */}
