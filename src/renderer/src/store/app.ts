@@ -23,6 +23,7 @@ interface AppStore {
   chatTaskContext: Task | null
   showParentTasks: boolean
   isLoadingTasks: boolean
+  showChatPanel: boolean
 
   init: () => Promise<void>
   loadFolders: () => Promise<void>
@@ -34,6 +35,7 @@ interface AppStore {
   setChatContext: (task: Task | null) => void
   setViewMode: (mode: 'list' | 'outline') => void
   setShowParentTasks: (show: boolean) => Promise<void>
+  toggleChatPanel: () => Promise<void>
 
   createTask: (input: CreateTaskInput) => Promise<Task>
   updateTask: (id: number, input: UpdateTaskInput) => Promise<Task>
@@ -59,13 +61,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
   chatTaskContext: null,
   showParentTasks: false,
   isLoadingTasks: false,
+  showChatPanel: true,
 
   init: async () => {
     _unsubscribeTasksChanged?.()
     _unsubscribeTasksChanged = undefined
 
     const showParents = await window.api.settings.get('show_parent_tasks')
-    set({ showParentTasks: showParents === 'true' })
+    const showChat = await window.api.settings.get('show_chat_panel')
+    set({
+      showParentTasks: showParents === 'true',
+      showChatPanel: showChat !== 'false'
+    })
     await Promise.all([get().loadFolders(), get().loadTasks()])
     _unsubscribeTasksChanged = window.api.tasks_events.onChanged(() => {
       void Promise.all([get().loadFolders(), get().loadTasks()]).catch((error) => {
@@ -154,6 +161,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ showParentTasks: show })
     await window.api.settings.set('show_parent_tasks', String(show))
     await get().loadTasks()
+  },
+
+  toggleChatPanel: async () => {
+    const next = !get().showChatPanel
+    set({ showChatPanel: next })
+    await window.api.settings.set('show_chat_panel', String(next))
   },
 
   createTask: async (input) => {
