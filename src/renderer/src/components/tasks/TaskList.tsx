@@ -46,8 +46,13 @@ export default function TaskList({ onSelectTask, selectedTaskId }: Props) {
   }
 
   async function handleArchiveConfirm() {
-    setShowArchiveConfirm(false)
-    await archiveCompletedTasks()
+    try {
+      await archiveCompletedTasks()
+      setShowArchiveConfirm(false)
+    } catch (error) {
+      console.error('Failed to archive completed tasks:', error)
+      window.alert('Failed to archive completed tasks. Please try again.')
+    }
   }
 
   const incomplete = tasks.filter((t) => !t.completed)
