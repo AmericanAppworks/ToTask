@@ -67,8 +67,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const showParents = await window.api.settings.get('show_parent_tasks')
     set({ showParentTasks: showParents === 'true' })
     await Promise.all([get().loadFolders(), get().loadTasks()])
-    _unsubscribeTasksChanged = window.api.tasks_events.onChanged(async () => {
-      await Promise.all([get().loadFolders(), get().loadTasks()])
+    _unsubscribeTasksChanged = window.api.tasks_events.onChanged(() => {
+      void Promise.all([get().loadFolders(), get().loadTasks()]).catch((error) => {
+        console.error('Failed to reload folders and tasks after tasks:changed', error)
+      })
     })
   },
 
