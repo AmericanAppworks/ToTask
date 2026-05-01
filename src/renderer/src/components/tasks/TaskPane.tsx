@@ -43,63 +43,70 @@ export default function TaskPane() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Tab bar */}
-      <div className="flex items-end border-b border-gray-200 dark:border-gray-800 shrink-0 overflow-x-auto px-1 pt-1">
-        <TabButton
-          label="Tasks"
-          active={selectedTaskId === null}
-          onClick={() => selectTask(null)}
-        />
-        {openTabIds.map((id) => (
+      {/* Tab bar: scrollable tabs on the left, fixed actions on the right */}
+      <div className="flex items-end border-b border-gray-200 dark:border-gray-800 shrink-0 px-1 pt-1">
+        {/* Scrollable tabs region */}
+        <div className="flex items-end overflow-x-auto min-w-0 flex-1">
           <TabButton
-            key={id}
-            label={tabTitles[id] ?? `Task #${id}`}
-            active={selectedTaskId === id}
-            onClick={() => selectTask(id)}
-            onClose={() => closeTab(id)}
+            label="Tasks"
+            active={selectedTaskId === null}
+            onClick={() => selectTask(null)}
           />
-        ))}
+          {openTabIds.map((id) => (
+            <TabButton
+              key={id}
+              label={tabTitles[id] ?? `Task #${id}`}
+              active={selectedTaskId === id}
+              onClick={() => selectTask(id)}
+              onClose={() => closeTab(id)}
+            />
+          ))}
+        </div>
 
-        {/* View mode toggle — only on the Tasks tab, not daily-log */}
-        {selectedTaskId === null && selectedView !== 'daily-log' && (
-          <div className="ml-auto flex items-center gap-0.5 pb-1 pr-1">
-            <button
-              onClick={() => setViewMode('list')}
-              title="List view"
-              className={`px-2 py-0.5 rounded text-xs transition-colors ${
-                viewMode === 'list'
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-              }`}
-            >
-              ☰
-            </button>
-            <button
-              onClick={() => setViewMode('outline')}
-              title="Outline view"
-              className={`px-2 py-0.5 rounded text-xs transition-colors ${
-                viewMode === 'outline'
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-              }`}
-            >
-              ⊞
-            </button>
-          </div>
-        )}
-        {/* Chat panel toggle — always visible on the right */}
-        {(selectedTaskId !== null || selectedView === 'daily-log') && <div className="ml-auto" />}
-        <button
-          onClick={() => toggleChatPanel()}
-          title={showChatPanel ? 'Hide chat panel' : 'Show chat panel'}
-          className={`ml-1 mb-1 px-2 py-0.5 rounded text-xs transition-colors ${
-            showChatPanel
-              ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-              : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-          }`}
-        >
-          💬
-        </button>
+        {/* Non-scrolling right-aligned actions */}
+        <div className="flex items-center gap-0.5 shrink-0 pb-1 pl-1">
+          {/* View mode toggle — only on the Tasks tab, not daily-log */}
+          {selectedTaskId === null && selectedView !== 'daily-log' && (
+            <>
+              <button
+                onClick={() => setViewMode('list')}
+                title="List view"
+                className={`px-2 py-0.5 rounded text-xs transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                }`}
+              >
+                ☰
+              </button>
+              <button
+                onClick={() => setViewMode('outline')}
+                title="Outline view"
+                className={`px-2 py-0.5 rounded text-xs transition-colors ${
+                  viewMode === 'outline'
+                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                }`}
+              >
+                ⊞
+              </button>
+            </>
+          )}
+          {/* Chat panel toggle — always visible */}
+          <button
+            onClick={() => toggleChatPanel()}
+            title={showChatPanel ? 'Hide chat panel' : 'Show chat panel'}
+            aria-label="Toggle chat panel"
+            aria-pressed={showChatPanel}
+            className={`px-2 py-0.5 rounded text-xs transition-colors ${
+              showChatPanel
+                ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+            }`}
+          >
+            💬
+          </button>
+        </div>
       </div>
 
       {/* Content */}
