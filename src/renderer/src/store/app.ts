@@ -42,6 +42,7 @@ interface AppStore {
   deleteTask: (id: number) => Promise<void>
   completeTask: (id: number, completed: boolean) => Promise<Task>
   splitTask: (input: SplitTaskInput) => Promise<Task[]>
+  archiveCompletedTasks: () => Promise<void>
 
   createFolder: (name: string) => Promise<Folder>
   updateFolder: (id: number, name: string) => Promise<Folder>
@@ -203,6 +204,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const subtasks = await window.api.tasks.split(input)
     await get().loadTasks()
     return subtasks
+  },
+
+  archiveCompletedTasks: async () => {
+    await window.api.tasks.archiveCompleted()
+    await get().loadTasks()
   },
 
   createFolder: async (name) => {

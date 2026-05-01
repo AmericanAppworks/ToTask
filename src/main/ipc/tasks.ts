@@ -55,6 +55,8 @@ export function registerTaskHandlers(ipcMain: IpcMain): void {
         )
       }
 
+      conditions.push('t.archived = 0')
+
       const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
       const sql = `${SELECT_TASK_FIELDS} ${where} ORDER BY t.completed ASC, t.due_date ASC NULLS LAST, t.created_at DESC`
       const rows = db.prepare(sql).all(...params) as Record<string, unknown>[]
@@ -168,7 +170,7 @@ export function registerTaskHandlers(ipcMain: IpcMain): void {
   ipcMain.handle('tasks:subtasks', (_, parentId: number) => {
     const db = getDb()
     const rows = db
-      .prepare(`${SELECT_TASK_FIELDS} WHERE t.parent_id = ? ORDER BY t.created_at ASC`)
+      .prepare(`${SELECT_TASK_FIELDS} WHERE t.parent_id = ? AND t.archived = 0 ORDER BY t.created_at ASC`)
       .all(parentId) as Record<string, unknown>[]
     return rows.map(rowToTask)
   })
@@ -222,5 +224,12 @@ export function registerTaskHandlers(ipcMain: IpcMain): void {
     )()
 
     return created
+  })
+
+  ipcMain.handle('tasks:archiveCompleted', () => {
+    const db = getDb()
+    db.prepare(
+      'UPDATE tasks SET archived = 1, updated_at = unixepoch() WHERE completed = 1 AND archived = 0'
+    ).run()
   })
 }

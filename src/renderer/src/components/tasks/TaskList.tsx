@@ -8,9 +8,10 @@ interface Props {
 }
 
 export default function TaskList({ onSelectTask, selectedTaskId }: Props) {
-  const { tasks, isLoadingTasks, selectedView, folders, createTask, completeTask, showParentTasks, setShowParentTasks } = useAppStore()
+  const { tasks, isLoadingTasks, selectedView, folders, createTask, completeTask, showParentTasks, setShowParentTasks, archiveCompletedTasks } = useAppStore()
   const [adding, setAdding] = useState(false)
   const [newTitle, setNewTitle] = useState('')
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -42,6 +43,16 @@ export default function TaskList({ onSelectTask, selectedTaskId }: Props) {
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') handleAddTask()
     else if (e.key === 'Escape') { setAdding(false); setNewTitle('') }
+  }
+
+  async function handleArchiveConfirm() {
+    try {
+      await archiveCompletedTasks()
+      setShowArchiveConfirm(false)
+    } catch (error) {
+      console.error('Failed to archive completed tasks:', error)
+      window.alert('Failed to archive completed tasks. Please try again.')
+    }
   }
 
   const incomplete = tasks.filter((t) => !t.completed)
@@ -111,10 +122,17 @@ export default function TaskList({ onSelectTask, selectedTaskId }: Props) {
         {/* Completed tasks */}
         {completed.length > 0 && (
           <>
-            <div className="px-3 pt-3 pb-1">
+            <div className="px-3 pt-3 pb-1 flex items-center justify-between">
               <span className="text-xs font-medium text-gray-400 dark:text-gray-600 uppercase tracking-wide">
                 Completed
               </span>
+              <button
+                onClick={() => setShowArchiveConfirm(true)}
+                className="text-xs text-gray-400 dark:text-gray-600 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+                title="Archive all completed tasks"
+              >
+                Archive
+              </button>
             </div>
             {completed.map((task) => (
               <TaskRow
@@ -142,6 +160,42 @@ export default function TaskList({ onSelectTask, selectedTaskId }: Props) {
           </div>
         )}
       </div>
+
+      {/* Archive confirmation dialog */}
+      {showArchiveConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowArchiveConfirm(false) }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="archive-dialog-title"
+            aria-describedby="archive-dialog-desc"
+            className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-5 w-80 space-y-3"
+            onKeyDown={(e) => { if (e.key === 'Escape') setShowArchiveConfirm(false) }}
+          >
+            <h3 id="archive-dialog-title" className="text-sm font-semibold text-gray-900 dark:text-gray-100">Archive completed tasks?</h3>
+            <p id="archive-dialog-desc" className="text-xs text-gray-500 dark:text-gray-400">
+              All completed tasks will be archived and hidden from every view except the Daily Log. This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                onClick={() => setShowArchiveConfirm(false)}
+                className="text-xs px-3 py-1.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleArchiveConfirm}
+                className="text-xs px-3 py-1.5 rounded bg-amber-500 text-white hover:bg-amber-600 transition-colors"
+              >
+                Archive
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -13,6 +13,7 @@ export interface Task {
   due_date: string | null
   completed: boolean
   completed_at: number | null
+  archived: boolean
   created_at: number
   updated_at: number
   tags: string[]

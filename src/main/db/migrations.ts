@@ -68,6 +68,10 @@ const migrations: Migration[] = [
   {
     version: 2,
     sql: `ALTER TABLE tasks ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;`
+  },
+  {
+    version: 3,
+    sql: `ALTER TABLE tasks ADD COLUMN archived INTEGER NOT NULL DEFAULT 0;`
   }
 ]
 

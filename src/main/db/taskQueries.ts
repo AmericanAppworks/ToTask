@@ -23,6 +23,7 @@ export function rowToTask(row: Record<string, unknown>): Task {
     due_date: row.due_date as string | null,
     completed: Boolean(row.completed),
     completed_at: row.completed_at as number | null,
+    archived: Boolean(row.archived),
     created_at: row.created_at as number,
     updated_at: row.updated_at as number,
     tags: row.tags_raw ? (row.tags_raw as string).split(',').filter(Boolean) : [],

@@ -27,7 +27,9 @@ const api = {
     listByCompletedDate: (date: string): Promise<Task[]> =>
       ipcRenderer.invoke('tasks:listByCompletedDate', date),
     reorder: (orderedIds: number[]): Promise<void> =>
-      ipcRenderer.invoke('tasks:reorder', orderedIds)
+      ipcRenderer.invoke('tasks:reorder', orderedIds),
+    archiveCompleted: (): Promise<void> =>
+      ipcRenderer.invoke('tasks:archiveCompleted')
   },
   folders: {
     list: (): Promise<Folder[]> => ipcRenderer.invoke('folders:list'),
