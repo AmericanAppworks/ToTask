@@ -72,6 +72,13 @@ const api = {
       return () => ipcRenderer.off('chat:error', handler)
     }
   },
+  tasks_events: {
+    onChanged: (callback: () => void) => {
+      const handler = (_: Electron.IpcRendererEvent): void => callback()
+      ipcRenderer.on('tasks:changed', handler)
+      return () => ipcRenderer.off('tasks:changed', handler)
+    }
+  },
   settings: {
     get: (key: string): Promise<string | null> => ipcRenderer.invoke('settings:get', key),
     set: (key: string, value: string): Promise<void> =>

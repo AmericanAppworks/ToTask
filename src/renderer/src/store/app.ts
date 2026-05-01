@@ -46,6 +46,8 @@ interface AppStore {
   deleteFolder: (id: number) => Promise<void>
 }
 
+let _unsubscribeTasksChanged: (() => void) | undefined
+
 export const useAppStore = create<AppStore>((set, get) => ({
   folders: [],
   tasks: [],
@@ -59,9 +61,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
   isLoadingTasks: false,
 
   init: async () => {
+    _unsubscribeTasksChanged?.()
+    _unsubscribeTasksChanged = undefined
+
     const showParents = await window.api.settings.get('show_parent_tasks')
     set({ showParentTasks: showParents === 'true' })
     await Promise.all([get().loadFolders(), get().loadTasks()])
+    _unsubscribeTasksChanged = window.api.tasks_events.onChanged(() => {
+      void Promise.all([get().loadFolders(), get().loadTasks()]).catch((error) => {
+        console.error('Failed to reload folders and tasks after tasks:changed', error)
+      })
+    })
   },
 
   loadFolders: async () => {
