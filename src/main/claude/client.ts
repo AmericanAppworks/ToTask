@@ -136,7 +136,13 @@ export async function runConversation(
       })
 
       if (!isError && MUTATING_TOOLS.has(block.name)) {
-        win.webContents.send('tasks:changed')
+        try {
+          if (!win.isDestroyed() && !win.webContents.isDestroyed()) {
+            win.webContents.send('tasks:changed')
+          }
+        } catch {
+          // Best-effort renderer notification; ignore if the window closed mid-conversation.
+        }
       }
 
       toolResults.push({
