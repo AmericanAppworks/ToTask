@@ -52,11 +52,13 @@ claude mcp add --transport http totask http://localhost:3737/mcp
 
 | Tool | Description |
 |------|-------------|
-| `list_tasks` | List tasks with optional filters (folder, tag, due date, completion) |
+| `list_tasks` | List tasks with optional filters (folder, tag, due date, completion, archived) |
 | `get_task` | Get a task by ID |
 | `create_task` | Create a task with title, folder, due date, notes, and tags |
 | `update_task` | Update any field on a task |
 | `complete_task` | Mark a task complete or incomplete |
+| `archive_task` | Archive or unarchive a task |
+| `archive_completed_tasks` | Archive all completed tasks |
 | `delete_task` | Delete a task |
 | `split_task` | Atomically create multiple subtasks under a parent |
 | `list_folders` | List all folders |

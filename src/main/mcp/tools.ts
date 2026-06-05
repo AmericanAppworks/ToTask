@@ -16,6 +16,7 @@ export function listTasks(filters: {
   completed?: boolean
   due_before?: string
   parent_id?: number
+  archived?: boolean
 } = {}): Task[] {
   const db = getDb()
   const conditions: string[] = []
@@ -40,6 +41,12 @@ export function listTasks(filters: {
   if (filters.parent_id !== undefined) {
     conditions.push('t.parent_id = ?')
     params.push(filters.parent_id)
+  }
+  if (filters.archived !== undefined) {
+    conditions.push('t.archived = ?')
+    params.push(filters.archived ? 1 : 0)
+  } else {
+    conditions.push('t.archived = 0')
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
@@ -119,6 +126,20 @@ export function completeTask(id: number, completed: boolean): Task {
   return getTask(id)
 }
 
+export function archiveTask(id: number, archived: boolean): Task {
+  getDb()
+    .prepare('UPDATE tasks SET archived = ?, updated_at = unixepoch() WHERE id = ?')
+    .run(archived ? 1 : 0, id)
+  return getTask(id)
+}
+
+export function archiveCompletedTasks(): { archived_count: number } {
+  const result = getDb()
+    .prepare('UPDATE tasks SET archived = 1, updated_at = unixepoch() WHERE completed = 1 AND archived = 0')
+    .run()
+  return { archived_count: result.changes }
+}
+
 export function deleteTask(id: number): void {
   getDb().prepare('DELETE FROM tasks WHERE id = ?').run(id)
 }
@@ -169,6 +190,8 @@ export function executeTool(name: string, input: Record<string, unknown>): unkno
     case 'create_task':  return createTask(input as Parameters<typeof createTask>[0])
     case 'update_task':  return updateTask(input.id as number, input as Parameters<typeof updateTask>[1])
     case 'complete_task': return completeTask(input.id as number, Boolean(input.completed))
+    case 'archive_task': return archiveTask(input.id as number, Boolean(input.archived))
+    case 'archive_completed_tasks': return archiveCompletedTasks()
     case 'delete_task':  { deleteTask(input.id as number); return { deleted: true } }
     case 'split_task':   return splitTask(input.parent_id as number, input.subtasks as SubtaskInput[])
     case 'list_folders': return listFolders()
