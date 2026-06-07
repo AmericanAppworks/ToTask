@@ -5,6 +5,7 @@ import {
   dialog,
   BrowserWindow,
   ipcMain,
+  type MessageBoxOptions,
   type IpcMainInvokeEvent,
   type MenuItemConstructorOptions
 } from 'electron'
@@ -79,14 +80,18 @@ function getMacArchiveDownloadUrl(release: LatestRelease): string {
   return archiveAsset?.browser_download_url ?? release.html_url
 }
 
+function showMessageBox(options: MessageBoxOptions, parentWindow?: BrowserWindow) {
+  return parentWindow ? dialog.showMessageBox(parentWindow, options) : dialog.showMessageBox(options)
+}
+
 async function checkForUpdates(manual: boolean, parentWindow?: BrowserWindow): Promise<void> {
   if (process.platform !== 'darwin') {
     if (manual) {
-      await dialog.showMessageBox(parentWindow, {
+      await showMessageBox({
         type: 'info',
         message: 'Updates are currently only available on macOS.',
         buttons: ['OK']
-      })
+      }, parentWindow)
     }
     return
   }
@@ -94,12 +99,12 @@ async function checkForUpdates(manual: boolean, parentWindow?: BrowserWindow): P
   const release = await fetchLatestRelease()
   if (!release) {
     if (manual) {
-      await dialog.showMessageBox(parentWindow, {
+      await showMessageBox({
         type: 'error',
         message: 'Unable to check for updates right now.',
         detail: 'Please try again later.',
         buttons: ['OK']
-      })
+      }, parentWindow)
     }
     return
   }
@@ -107,35 +112,35 @@ async function checkForUpdates(manual: boolean, parentWindow?: BrowserWindow): P
   const currentVersion = app.getVersion()
   if (!isReleaseNewer(currentVersion, release.tag_name)) {
     if (manual) {
-      await dialog.showMessageBox(parentWindow, {
+      await showMessageBox({
         type: 'info',
         message: 'You are up to date.',
         detail: `ToTask ${currentVersion} is the latest version.`,
         buttons: ['OK']
-      })
+      }, parentWindow)
     }
     return
   }
 
   const updateVersion = release.tag_name.replace(/^v/i, '')
-  const { response } = await dialog.showMessageBox(parentWindow, {
+  const { response } = await showMessageBox({
     type: 'info',
     message: `ToTask ${updateVersion} is available.`,
     detail: 'Download the latest archive and drag ToTask into Applications to upgrade.',
     buttons: ['Download Update', 'Later'],
     defaultId: 0,
     cancelId: 1
-  })
+  }, parentWindow)
 
   if (response !== 0) return
 
   await shell.openExternal(getMacArchiveDownloadUrl(release))
-  await dialog.showMessageBox(parentWindow, {
+  await showMessageBox({
     type: 'info',
     message: 'Finish updating ToTask',
     detail: 'Open the downloaded archive, then drag ToTask into the Applications folder.',
     buttons: ['OK']
-  })
+  }, parentWindow)
 }
 
 function createAppMenu(mainWindow: BrowserWindow): void {
