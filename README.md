@@ -16,6 +16,7 @@ A personal to-do app with Claude AI built in. Manage tasks, research them with w
 - **Outline view** — text-editor-style task tree with keyboard-driven indent/unindent, drag-to-reorder, and inline note editing
 - **Daily log** — review everything you completed on any given day
 - **Markdown notes** — full markdown in task notes with headings, links, lists, and code blocks
+- **Update checks on macOS** — automatically checks GitHub for new releases on startup and includes **Check for Updates...** in the app menu
 
 ## Keyboard shortcuts (Outline view)
 
