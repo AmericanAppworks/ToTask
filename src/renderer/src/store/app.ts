@@ -55,7 +55,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   folders: [],
   tasks: [],
   selectedView: 'inbox',
-  viewMode: 'list',
+  viewMode: 'outline',
   selectedTaskId: null,
   openTabIds: [],
   tabTitles: {},
