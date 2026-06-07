@@ -5,7 +5,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { z } from 'zod'
 import {
-  listTasks, getTask, createTask, updateTask, completeTask, deleteTask, splitTask,
+  listTasks, getTask, createTask, updateTask, completeTask, archiveTask, archiveCompletedTasks, deleteTask, splitTask,
   listFolders, createFolder, deleteFolder, listTags
 } from './tools'
 
@@ -32,9 +32,10 @@ function buildMcpServer(): McpServer {
     tag: z.string().optional(),
     completed: z.boolean().optional(),
     due_before: z.string().optional(),
-    parent_id: z.number().optional()
-  }, ({ folder_id, tag, completed, due_before, parent_id }) => ({
-    content: [{ type: 'text' as const, text: JSON.stringify(listTasks({ folder_id, tag, completed, due_before, parent_id })) }]
+    parent_id: z.number().optional(),
+    archived: z.boolean().optional()
+  }, ({ folder_id, tag, completed, due_before, parent_id, archived }) => ({
+    content: [{ type: 'text' as const, text: JSON.stringify(listTasks({ folder_id, tag, completed, due_before, parent_id, archived })) }]
   }))
 
   mcp.tool('get_task', 'Get a task by ID.', { id: z.number() }, ({ id }) => ({
@@ -85,6 +86,21 @@ function buildMcpServer(): McpServer {
     completed: z.boolean()
   }, ({ id, completed }) => {
     const result = completeTask(id, completed)
+    notifyTasksChanged()
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  })
+
+  mcp.tool('archive_task', 'Archive or unarchive a task.', {
+    id: z.number(),
+    archived: z.boolean()
+  }, ({ id, archived }) => {
+    const result = archiveTask(id, archived)
+    notifyTasksChanged()
+    return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+  })
+
+  mcp.tool('archive_completed_tasks', 'Archive all completed tasks that are not already archived.', {}, () => {
+    const result = archiveCompletedTasks()
     notifyTasksChanged()
     return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
   })
